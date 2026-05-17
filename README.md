@@ -146,3 +146,7 @@ stellar_anomaly_detector/
 ## License
 
 MIT
+
+
+---
+*Built with AI assistance from [Claude (Anthropic)](https://claude.com/).*
