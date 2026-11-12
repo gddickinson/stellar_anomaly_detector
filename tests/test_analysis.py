@@ -257,3 +257,22 @@ def test_ml_auto_features_exclude_sky_coordinates(synthetic_df):
     features = MLPipeline._auto_select_features(synthetic_df)
     assert "ra" not in features and "dec" not in features
     assert "parallax" in features  # substring "ra" must not exclude real features
+
+
+def test_ruwe_test_fires_after_quality_cuts(config):
+    """The quality cut removes RUWE > max_ruwe from the analysis sample, but the RUWE test must still see stars
+    that failed only that cut (not ones that also fail the parallax cut)."""
+    from stellar_detector.data.preprocessing import preprocess_catalog
+    n = 60
+    rng = np.random.default_rng(1)
+    raw = pd.DataFrame({
+        "source_id": [f"S{i}" for i in range(n)], "parallax": rng.uniform(2, 10, n), "parallax_error": 0.05,
+        "pmra": rng.normal(0, 3, n), "pmdec": rng.normal(0, 3, n), "phot_g_mean_mag": rng.uniform(10, 15, n),
+        "bp_rp": rng.uniform(0.5, 2, n), "ruwe": 1.0, "catalog_source": "test",
+    })
+    raw.loc[0, "ruwe"] = 3.0                                   # binary-like, good parallax
+    raw.loc[1, ["ruwe", "parallax_error"]] = [3.0, 5.0]         # also fails parallax/error >= 5
+    df = preprocess_catalog(raw, config)
+    assert "S0" not in set(df["source_id"])                    # cut still applies to the analysis sample
+    flagged = {r.star_id for r in KinematicsAnalyzer(config).analyze(df) if r.detection_method == "ruwe_threshold"}
+    assert flagged == {"S0"}

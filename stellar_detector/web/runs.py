@@ -124,7 +124,7 @@ def upload_run(data: bytes, name: str, config_overrides: dict) -> str:
 
 
 def summary(run: dict) -> dict:
-    keys = ("source", "config", "n_input", "n_stars", "modules", "stats", "tiers", "hr", "seconds")
+    keys = ("source", "config", "n_input", "n_stars", "n_ruwe_set_aside", "modules", "stats", "tiers", "hr", "seconds")
     out = {k: run[k] for k in keys}
     out["n_detections"] = len(run["detections"])
     out["n_candidates"] = len(run["candidates"])

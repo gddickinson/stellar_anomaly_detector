@@ -42,7 +42,7 @@ route('plots', async (args, query) => {
     ? Object.entries(MODULE_COLORS).map(([m, c]) => dot(MODULE_NAMES[m], c)).join('') + dot('not flagged', TIER_COLORS.none)
     : [1, 2, 3, 'raw', 'none'].map(t => dot(TIER_NAMES[t], TIER_COLORS[t])).join('');
   app().innerHTML = `${runBar(sum)}<h1>Plots</h1>
-    <p class="lead">${stars.source_id.length.toLocaleString()} stars after quality cuts. Hover for the star, click to open it.</p>
+    <p class="lead">${sum.n_stars.toLocaleString()} stars after quality cuts${sum.n_ruwe_set_aside ? `, plus ${sum.n_ruwe_set_aside} set aside for RUWE &gt; ${f(sum.config.max_ruwe)} (only the RUWE test sees them)` : ''}. Hover for the star, click to open it.</p>
     <div class="row" style="align-items:center"><div class="seg" role="group" aria-label="Plot">${tabs}</div>
       <div><label for="cmode">Colour by</label><select id="cmode"><option value="tier">ensemble tier</option><option value="module" ${mode === 'module' ? 'selected' : ''}>first module that flagged the star</option></select></div></div>
     <div class="legend">${legend}</div>

@@ -70,7 +70,14 @@ class KinematicsAnalyzer:
         return results
 
     def _ruwe_anomalies(self, df: pd.DataFrame) -> list[AnomalyResult]:
-        """Flag stars with RUWE > 1.4 (non-single-star behavior)."""
+        """Flag stars with RUWE > max_ruwe (non-single-star behavior).
+
+        preprocess_catalog removes these stars from the analysis sample, so the ones that failed
+        only the RUWE cut are read from ``df.attrs["ruwe_rejects"]`` as well.
+        """
+        rejects = df.attrs.get("ruwe_rejects")
+        if isinstance(rejects, pd.DataFrame) and len(rejects):
+            df = pd.concat([df, rejects], ignore_index=True)
         if "ruwe" not in df.columns:
             return []
 

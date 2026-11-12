@@ -151,8 +151,12 @@ def run_pipeline(raw: pd.DataFrame, config: DetectionConfig, source: dict) -> di
             modules.append({"id": mid, "label": label, "n": 0, "error": str(e), "methods": {}})
     tiers = ensemble_with_tiers([r for _, r in detections])
     stats = EnsembleScorer().summary_stats([r for _, r in tiers])
-    cols = [c for c in STAR_COLUMNS if c in df.columns]
-    stars = {c: clean(df[c].astype(str).tolist() if c == "source_id" else df[c].tolist()) for c in cols}
+    # Stars that failed only the RUWE cut: not analysed, but the RUWE test may flag them, so list them too.
+    rejects = df.attrs.get("ruwe_rejects")
+    rejects = rejects if isinstance(rejects, pd.DataFrame) else df.iloc[:0]
+    table = pd.concat([df.assign(analysed=True), rejects.assign(analysed=False)], ignore_index=True)
+    cols = [c for c in STAR_COLUMNS if c in table.columns] + ["analysed"]
+    stars = {c: clean(table[c].astype(str).tolist() if c == "source_id" else table[c].tolist()) for c in cols}
     cands = []
     for rank, (tier, r) in enumerate(tiers, 1):
         d = result_dict(r)
@@ -161,7 +165,7 @@ def run_pipeline(raw: pd.DataFrame, config: DetectionConfig, source: dict) -> di
     return {
         "source": source,
         "config": clean(asdict(config)),
-        "n_input": int(len(raw)), "n_stars": int(len(df)),
+        "n_input": int(len(raw)), "n_stars": int(len(df)), "n_ruwe_set_aside": int(len(rejects)),
         "modules": modules,
         "detections": [result_dict(r, mid) for mid, r in detections],
         "candidates": cands,

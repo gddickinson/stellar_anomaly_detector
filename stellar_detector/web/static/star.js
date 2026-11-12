@@ -8,8 +8,8 @@ import { getCandidates, getDetections, getStar, getStars, getSummary, runBar, ru
 
 const PCT_COLS = ['pm_total', 'v_tan_km_s', 'abs_mag', 'bp_rp', 'mh_gspphot', 'ruwe', 'astrometric_excess_noise_sig'];
 
-function percentile(vals, v) {
-  const s = vals.filter(x => x !== null);
+function percentile(vals, v, analysed) {
+  const s = vals.filter((x, i) => x !== null && (!analysed || analysed[i]));
   return s.length && v !== null ? (100 * s.filter(x => x < v).length) / s.length : null;
 }
 const kv = obj => `<dl class="kv">${Object.entries(obj).map(([k, v]) => `<dt>${esc(nice(k))}</dt><dd>${esc(typeof v === 'number' ? f(v) : Array.isArray(v) ? v.join(', ') : JSON.stringify(v))}</dd>`).join('')}</dl>`;
@@ -25,6 +25,7 @@ route('star', async (args, query) => {
       : 'Not flagged by any module.';
   app().innerHTML = `${runBar(sum)}<p class="kicker">Star</p><h1 class="glow" style="overflow-wrap:anywhere">${esc(sid)}</h1>
     <p>${status}</p>
+    ${p.analysed === false ? `<p class="static-note">This star failed the RUWE quality cut (RUWE ${f(p.ruwe, 3)} &gt; ${f(sum.config.max_ruwe)}), so only the RUWE test was run on it.</p>` : ''}
     ${c ? `<div class="panel"><h3>Ensemble result</h3><p>${esc(c.description)}</p>
       <p class="small mute">Type ${esc(nice(c.anomaly_type))} · priority ${c.follow_up_priority} · significance ${f(c.significance_score, 3)} · confidence ${f(c.confidence, 2)} · method <code>${esc(c.detection_method)}</code></p>
       ${c.observational_recommendations.length ? `<p class="small">Suggested follow-up (from the module): ${c.observational_recommendations.map(esc).join('; ')}</p>` : ''}</div>` : ''}
@@ -38,7 +39,7 @@ route('star', async (args, query) => {
         ${Object.keys(d.parameters).length ? `<details><summary class="small">Parameters</summary>${kv(d.parameters)}</details>` : ''}</div>`).join('')
         : '<p class="mute">None of the six modules flagged this star.</p>'}
       <h2>Within the field</h2><p class="small mute">Percentile among the ${sum.n_stars.toLocaleString()} stars of this run (share of stars with a smaller value).</p>
-      <dl class="kv">${PCT_COLS.filter(k => stars[k]).map(k => { const q = percentile(stars[k], p[k]); return `<dt>${esc(colLabel(k))}</dt><dd>${f(p[k])} ${q === null ? '' : `· ${q.toFixed(1)}th percentile`}</dd>`; }).join('')}</dl></div>
+      <dl class="kv">${PCT_COLS.filter(k => stars[k]).map(k => { const q = percentile(stars[k], p[k], stars.analysed); return `<dt>${esc(colLabel(k))}</dt><dd>${f(p[k])} ${q === null ? '' : `· ${q.toFixed(1)}th percentile`}</dd>`; }).join('')}</dl></div>
     <div><h2>On the HR diagram</h2><div id="hr"></div>
       <h2>Catalogue values</h2><dl class="kv">${Object.entries(p).filter(([, v]) => v !== null).map(([k, v]) => `<dt>${esc(colLabel(k))}</dt><dd>${esc(typeof v === 'number' ? f(v, 6) : String(v))}</dd>`).join('')}</dl>
       <p class="small"><a href="${simbad}" target="_blank" rel="noopener">Look up these coordinates in SIMBAD</a></p></div></div>

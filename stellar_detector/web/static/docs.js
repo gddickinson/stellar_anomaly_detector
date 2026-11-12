@@ -26,8 +26,8 @@ route('method', async () => {
         linear ZAMS and TAMS lines in Teff, and flags it above 90% of the band. Giants and subgiants sit beyond the TAMS line and are
         flagged as a matter of course; this is evolution, not an impossible age.</span></div>
       <div class="card"><b>Kinematics</b><span>High total proper motion (z > ${f(c.mad_threshold)}), RUWE above ${f(c.max_ruwe)},
-        astrometric excess-noise significance ≥ 5, and tangential velocity > 200 km/s with z > ${f(c.mad_threshold)}. Because the
-        quality cut already removes RUWE > ${f(c.max_ruwe)}, the RUWE test cannot fire in the standard pipeline.</span></div>
+        astrometric excess-noise significance ≥ 5, and tangential velocity > 200 km/s with z > ${f(c.mad_threshold)}. Stars that
+        fail only the RUWE cut are kept out of every other test but still given to the RUWE test.</span></div>
       <div class="card"><b>Spectral</b><span>On Gaia GSP-Phot Teff, log g and [M/H]: metallicity z-score, Isolation Forest on
         the three, and LOF in the Teff–[M/H] plane (needs 50+ stars). Reported if two of the three agree.</span></div>
       <div class="card"><b>Technosignature</b><span>Needs WISE W3/W4 photometry. A Project Hephaistos-style grid of star +

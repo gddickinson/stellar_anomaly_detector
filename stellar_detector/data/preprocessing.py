@@ -12,15 +12,26 @@ from ..core.models import DetectionConfig
 logger = logging.getLogger(__name__)
 
 
+RUWE_REJECTS_ATTR = "ruwe_rejects"
+
+
 def preprocess_catalog(df: pd.DataFrame, config: DetectionConfig | None = None) -> pd.DataFrame:
-    """Run the full preprocessing pipeline on a catalog dataframe."""
+    """Run the full preprocessing pipeline on a catalog dataframe.
+
+    Stars that fail only the RUWE cut are removed from the analysis sample but kept in
+    ``result.attrs["ruwe_rejects"]`` so the RUWE (unresolved-companion) test can still flag them.
+    """
     config = config or DetectionConfig()
     df = df.copy()
     df = compute_derived_quantities(df)
-    df = apply_quality_filters(df, config)
-    df = compute_quality_score(df)
-    logger.info("Preprocessing complete: %d rows retained", len(df))
-    return df
+    others = apply_quality_filters(df, config, apply_ruwe=False)
+    out = apply_quality_filters(others, config)
+    out = compute_quality_score(out)
+    rejects = compute_quality_score(others.drop(index=out.index))
+    out.attrs[RUWE_REJECTS_ATTR] = rejects
+    logger.info("Preprocessing complete: %d rows retained (%d set aside for RUWE > %.2f)",
+                len(out), len(rejects), config.max_ruwe)
+    return out
 
 
 def compute_derived_quantities(df: pd.DataFrame) -> pd.DataFrame:
@@ -67,8 +78,10 @@ def compute_derived_quantities(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def apply_quality_filters(df: pd.DataFrame, config: DetectionConfig) -> pd.DataFrame:
-    """Filter rows based on Gaia DR3 quality criteria."""
+def apply_quality_filters(
+    df: pd.DataFrame, config: DetectionConfig, apply_ruwe: bool = True
+) -> pd.DataFrame:
+    """Filter rows based on Gaia DR3 quality criteria (the RUWE cut only if ``apply_ruwe``)."""
     n_before = len(df)
 
     if "parallax" in df.columns and "parallax_error" in df.columns:
@@ -76,7 +89,7 @@ def apply_quality_filters(df: pd.DataFrame, config: DetectionConfig) -> pd.DataF
         mask = plx_snr >= config.min_parallax_over_error
         df = df[mask | plx_snr.isna()]
 
-    if "ruwe" in df.columns:
+    if apply_ruwe and "ruwe" in df.columns:
         # Keep rows with RUWE <= threshold OR where RUWE is missing
         df = df[(df["ruwe"] <= config.max_ruwe) | df["ruwe"].isna()]
 

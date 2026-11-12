@@ -78,7 +78,7 @@ def test_demo_counts_consistent():
     assert s["n_candidates"] == sum(s["tiers"].values()) == s["stats"]["total"]
     assert all(m["error"] is None for m in s["modules"])
     stars = client.get("/api/runs/demo/stars").json()
-    assert len(stars["source_id"]) == s["n_stars"] and all(isinstance(x, str) for x in stars["source_id"])
+    assert len(stars["source_id"]) == s["n_stars"] + s["n_ruwe_set_aside"] and all(isinstance(x, str) for x in stars["source_id"])
 
 
 def test_demo_candidates_match_ensemble_aggregate():
