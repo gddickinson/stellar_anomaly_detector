@@ -39,7 +39,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--radius", type=float, default=5.0, help="Search radius (degrees)")
 
     # Thresholds
-    parser.add_argument("--outlier-threshold", type=float, default=3.0)
+    parser.add_argument(
+        "--outlier-threshold", type=float, default=None,
+        help="Robust z-score (MAD) threshold used by the outlier detectors "
+             "(default: DetectionConfig, 4.0)",
+    )
     parser.add_argument("--contamination", type=float, default=0.03)
 
     # Cache / output options
@@ -49,6 +53,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
 
     return parser
+
+
+def config_from_args(args: argparse.Namespace) -> DetectionConfig:
+    """DetectionConfig from parsed CLI arguments.
+
+    The analyzers read ``mad_threshold``; ``--outlier-threshold`` sets it together with
+    ``outlier_threshold``, as the GUI presets do.
+    """
+    config = DetectionConfig(isolation_contamination=args.contamination)
+    if args.outlier_threshold is not None:
+        config.outlier_threshold = args.outlier_threshold
+        config.mad_threshold = args.outlier_threshold
+    return config
 
 
 SOURCE_MAP = {
@@ -71,10 +88,7 @@ def main():
         _launch_gui()
         return
 
-    config = DetectionConfig(
-        outlier_threshold=args.outlier_threshold,
-        isolation_contamination=args.contamination,
-    )
+    config = config_from_args(args)
 
     from .data.fetcher import DataFetcher
     from .data.preprocessing import preprocess_catalog
