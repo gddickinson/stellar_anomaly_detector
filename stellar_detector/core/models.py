@@ -136,6 +136,9 @@ class DetectionConfig:
     min_phot_bp_rp_excess: float = 0.8
 
     # --- Technosignature (Project Hephaistos) ---
+    # UNCALIBRATED: dyson_sed_rmse_max (and the fixed RMSE-improvement cut of 0.05 in
+    # technosignature.py) have not been tuned on real photometry or injection tests; treat
+    # candidates as a list to inspect, not a calibrated selection.
     dyson_temp_min_k: float = 100.0
     dyson_temp_max_k: float = 700.0
     dyson_covering_min: float = 0.1

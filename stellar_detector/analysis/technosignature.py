@@ -140,7 +140,9 @@ class TechnosignatureAnalyzer:
         star_norm = star_flux / np.max(star_flux) if np.max(star_flux) > 0 else star_flux
         star_rmse = np.sqrt(np.mean((fluxes_norm - star_norm) ** 2))
 
-        # Candidate if DS model is significantly better AND within RMSE threshold
+        # Candidate if DS model is significantly better AND within RMSE threshold.
+        # UNCALIBRATED: rmse_max (config) and the 0.05 improvement cut are not tuned on real
+        # photometry or injection-recovery tests; they set no false-positive rate.
         improvement = star_rmse - best_rmse
         if best_rmse < self.config.dyson_sed_rmse_max and improvement > 0.05:
             # Check W3/W4 SNR requirements (no error = AllWISE upper limit = not detected)

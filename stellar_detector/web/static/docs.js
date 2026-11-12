@@ -32,7 +32,8 @@ route('method', async () => {
         the three, and LOF in the Teff–[M/H] plane (needs 50+ stars). Reported if two of the three agree.</span></div>
       <div class="card"><b>Technosignature</b><span>Needs WISE W3/W4 photometry. A Project Hephaistos-style grid of star +
         warm-shell blackbody SEDs (shell 100–700 K, covering factor 0.1–0.9), W1−W2 / W2−W3 colour excess, and fast stars with
-        W1−W2 excess ("stellar engine"). Infrared excess has many natural causes: circumstellar dust, debris discs, young or
+        W1−W2 excess ("stellar engine"). The Dyson-fit thresholds (RMSE &lt; ${f(c.dyson_sed_rmse_max)}, improvement &gt; 0.05)
+        are uncalibrated: not tuned on real photometry or injection tests. Infrared excess has many natural causes: circumstellar dust, debris discs, young or
         evolved stars, and galaxies blended into the large WISE beam.</span></div>
       <div class="card"><b>ML pipeline</b><span>Isolation Forest, Local Outlier Factor and One-Class SVM (and coniferest's adaptive
         forest if installed) on all numeric columns except IDs and sky position. Scores are min-max normalised per method, averaged

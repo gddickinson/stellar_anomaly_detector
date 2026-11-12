@@ -20,7 +20,9 @@ Stellar Anomaly Detector is a modular Python package that fetches data from majo
 - **Kinematics** -- Proper motion outliers, RUWE anomalies, hypervelocity candidates
 - **Variability** -- Photometric scatter, Stetson J/K/L indices, Lomb-Scargle periodograms
 - **Spectral** -- Metallicity outliers, chemical ratio anomalies, autoencoder ensemble
-- **Technosignature** -- Dyson sphere SED grid search (Project Hephaistos methodology), IR excess, stellar engines
+- **Technosignature** -- Dyson sphere SED grid search (Project Hephaistos methodology), IR excess, stellar engines.
+  The Dyson-fit thresholds (`dyson_sed_rmse_max` = 0.2, RMSE improvement > 0.05) are uncalibrated: they have not been
+  tuned on real photometry or injection-recovery tests, so they set no known false-positive rate.
 - **ML Pipeline** -- Isolation Forest, LOF, One-Class SVM, Adaptive IF ensemble
 - **Ensemble Scorer** -- Deduplication, multi-method confidence merging
 
