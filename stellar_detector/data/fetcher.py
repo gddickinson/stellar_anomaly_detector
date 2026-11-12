@@ -332,8 +332,11 @@ class DataFetcher:
         rng = np.random.default_rng(42)
 
         temperatures = 10 ** rng.uniform(3.4, 4.7, n_stars)
-        main_seq_mag = _synthetic_main_sequence_mag(temperatures)
-        scatter = rng.normal(0, 0.3, n_stars)
+        # Main-sequence stars of random age: 0-80% of the way from ZAMS to TAMS in the package's
+        # own evolution model (the one the lifetime test uses), with 0.05 mag photometric scatter.
+        age_fraction = rng.uniform(0.0, 0.8, n_stars)
+        main_seq_mag = _synthetic_main_sequence_mag(temperatures, age_fraction)
+        scatter = rng.normal(0, 0.05, n_stars)
 
         df = pd.DataFrame({
             "source_id": [f"SYN_{i:06d}" for i in range(n_stars)],
@@ -368,7 +371,15 @@ class DataFetcher:
         return df
 
 
-def _synthetic_main_sequence_mag(temperatures: np.ndarray) -> np.ndarray:
-    """Approximate absolute magnitude for main-sequence stars given temperature."""
-    log_t = np.log10(temperatures)
-    return -10.0 * log_t + 40.0
+def _synthetic_main_sequence_mag(temperatures: np.ndarray, age_fraction: np.ndarray) -> np.ndarray:
+    """Absolute magnitude of main-sequence stars at the given fraction of the ZAMS->TAMS band.
+
+    Uses StellarEvolutionModels (zams/tams_mag_from_teff), so a clean synthetic population is
+    on the main sequence as the lifetime test defines it.
+    """
+    from ..models.stellar_evolution import StellarEvolutionModels
+
+    models = StellarEvolutionModels()
+    zams = np.array([models.zams_mag_from_teff(t) for t in temperatures])
+    tams = np.array([models.tams_mag_from_teff(t) for t in temperatures])
+    return zams - np.asarray(age_fraction) * (zams - tams)
