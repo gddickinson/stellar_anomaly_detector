@@ -178,10 +178,13 @@ class MLPipeline:
         exclude_patterns = [
             "source_id", "catalog_source", "is_injected", "quality_score",
         ]
+        # Sky position (exact names: a substring test for "ra" would also drop "parallax")
+        exclude_exact = {"ra", "dec", "ra_error", "dec_error", "l", "b", "ecl_lon", "ecl_lat"}
         candidates = df.select_dtypes(include=[np.number]).columns.tolist()
         return [
             c for c in candidates
             if not any(pat in c.lower() for pat in exclude_patterns)
+            and c.lower() not in exclude_exact
             and df[c].notna().sum() > len(df) * 0.5  # at least 50% non-null
         ]
 

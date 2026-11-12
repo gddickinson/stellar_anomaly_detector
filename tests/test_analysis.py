@@ -250,3 +250,10 @@ class TestEnsembleScorer:
         df = scorer.to_dataframe(results)
         assert len(df) == 1
         assert "star_id" in df.columns
+
+
+def test_ml_auto_features_exclude_sky_coordinates(synthetic_df):
+    """Position on the sky is not a stellar property: ra/dec must not drive the ML outlier score."""
+    features = MLPipeline._auto_select_features(synthetic_df)
+    assert "ra" not in features and "dec" not in features
+    assert "parallax" in features  # substring "ra" must not exclude real features
