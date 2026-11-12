@@ -21,7 +21,7 @@ explorer in the browser (`ensemble_engine.js`, matches Python exactly on 4 rule 
 120 ensemble candidates, 5 Tier 1). KIC 8462852 itself is not flagged. CDS VizieR was down (the CfA mirror returned
 mislabelled columns), so no AllWISE/2MASS photometry: the technosignature module has nothing to test on the demo.
 
-**Needs George's decision (not changed):**
+**Needs George's decision (not changed at the time; see the later entry: all fixed):**
 - Ensemble Tier 3 compares one significance cut (6) across scales that differ by module: the lifetime test emits
   10 × age fraction (always ≥ 9 when flagged) and the ML pipeline 10 × score (always ≥ 7), so every such detection is
   "extreme". In the demo, 59 of 120 candidates are lifetime-only (mostly giants).
@@ -36,3 +36,19 @@ mislabelled columns), so no AllWISE/2MASS photometry: the technosignature module
 
 Tests: 79 unit tests + 805 web tests pass; node ensemble test passes; screenshots smoke test all ok (static and local).
 The Mac mini was not used.
+
+## 2026-11-11 (later) — Open decisions fixed at George's request ("fix any other problems")
+
+Each with a regression test that failed first, in its own commit:
+- Robust z-scores now use 1.4826 × MAD (σ units), shared in `analysis/robust.py`.
+- Dyson-fit thresholds documented as uncalibrated (DetectionConfig, technosignature.py, README, Method page).
+- RUWE test fires: stars failing only the RUWE cut stay out of other tests but are passed to the RUWE test
+  (`df.attrs["ruwe_rejects"]`); 21 such stars in the demo, shown in the web app as "not analysed".
+- Synthetic stars now lie 0–80% across the lifetime model's ZAMS→TAMS band: the ensemble selects 1.0% of clean
+  synthetic stars and 93% of injected anomalies (n = 2000).
+- Ensemble Tier 3 uses a common σ scale (`common_significance`): robust |z|; rank-percentile σ for the lifetime and
+  ML tests; none for scores without σ meaning. Demo candidates 120 → 32 (5 Tier 1, 1 Tier 2, 26 Tier 3).
+- `cli --multi` cross-matches the other catalogues onto the first (`merge_catalogs`, `--match-radius`, default 5").
+
+Still open: the Dyson thresholds have no calibration (needs injection-recovery on real photometry); the web Run page
+fetches one catalogue at a time (multi-catalogue runs via the CLI).

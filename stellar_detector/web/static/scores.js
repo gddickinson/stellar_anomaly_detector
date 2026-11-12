@@ -27,7 +27,7 @@ route('scores', async (args, query) => {
     ${sum.modules.map(m => `<tr><td class="nw">${dot(MODULE_NAMES[m.id] || m.label, MODULE_COLORS[m.id])}</td><td>${m.n}</td>
       <td>${m.error ? `<span class="err">failed: ${esc(m.error)}</span>` : Object.entries(m.methods).map(([k, n]) => `<span class="tag">${esc(k)} ${n}</span>`).join('') || '<span class="mute">none</span>'}</td>
       <td class="desc small">${esc(SCALE[m.id] || '')}</td></tr>`).join('')}</tbody></table></div>
-    <h2>Significance by module</h2>
+    <h2>Common σ significance by module</h2>
     <div class="charts">${sum.modules.filter(m => m.n).map(m => `<div class="panel"><h3>${esc(MODULE_NAMES[m.id])}</h3>
       ${histogram(byMod(m).map(d => d.common_significance), { xlabel: 'common significance (σ)', bins: 20, marks: [{ x: info.ensemble.single_min_significance, label: 'Tier 3 cut' }] })}</div>`).join('')}</div>
     <p class="small mute">Detections on the common σ scale the ensemble's single-method cut uses (dashed line, ≥ ${info.ensemble.single_min_significance} σ).

@@ -18,13 +18,16 @@
 - **`preprocessing.py`** — Pipeline functions
   - `preprocess_catalog(df, config)` — Full pipeline: derived quantities + quality filters + scoring
   - `compute_derived_quantities(df)` — Distance, abs_mag, pm_total, v_tan, color indices, luminosity
-  - `apply_quality_filters(df, config)` — Gaia DR3 quality cuts (parallax SNR, RUWE, BP-RP excess)
+  - `apply_quality_filters(df, config, apply_ruwe=True)` — Gaia DR3 quality cuts (parallax SNR, RUWE, BP-RP excess)
+  - stars failing only the RUWE cut are kept in `df.attrs["ruwe_rejects"]` for the RUWE test
   - `normalize_features(df, columns)` — Robust median/MAD normalization
 - **`cross_match.py`** — `CrossCatalogMatcher` class
   - `match(catalog_a, catalog_b, epochs)` — Positional matching with epoch propagation + FoM scoring
   - `match_multiple(catalogs, epochs)` — Pairwise cross-match of multiple catalogs
+  - `merge_catalogs(primary, others, radius_arcsec, epochs)` — one row per primary star with the other catalogues' columns (nearest match, one-to-one); used by `cli --multi`
 
 ### `analysis/` — Anomaly Detection Modules
+- **`robust.py`** — `robust_center_scale(values)` (median, 1.4826·MAD) for every robust z-score; `rank_sigma(population, value)` (upper-tail rank → Gaussian σ)
 - **`hr_diagram.py`** — `HRDiagramAnalyzer`
   - `analyze(df)` — Main-sequence deviation (robust z-score), DBSCAN noise, KDE low-density, GMM low-likelihood
 - **`stellar_lifetime.py`** — `StellarLifetimeAnalyzer`
@@ -43,6 +46,7 @@
   - `analyze(df, feature_columns)` — Ensemble ML: Isolation Forest + LOF + OCSVM + Adaptive IF
 - **`ensemble.py`** — `EnsembleScorer`
   - `aggregate(results)` — Deduplicate, merge multi-method detections, boost confidence
+  - `common_significance(result)` — the common σ scale of the single-method (Tier 3) cut (`NON_SIGMA_METHODS`, `sigma_equiv`)
   - `to_dataframe(results)` — Convert to pandas DataFrame
   - `summary_stats(results)` — Compute summary statistics
 - **`dimensionality.py`** — Advanced ML utilities
@@ -103,6 +107,7 @@
 ### `cli.py` — Command-Line Interface
 - `main()` — Entry point: parse args, fetch data, run all analyzers, aggregate, output
 - `config_from_args(args)` — DetectionConfig from CLI args (`--outlier-threshold` sets `mad_threshold`)
+- `load_multi(fetcher, args, config)` — `--multi`: fetch and cross-match onto the first catalogue (`--match-radius`)
 - Supports `--gui`, `--source`, `--multi`, `--file`, `--stars`, `--report`, `--format`
 
 ### `web/` — Web interface (FastAPI + plain ES modules) and static-site data
@@ -127,7 +132,9 @@
 
 ### `tests/`
 - `test_analysis.py`, `test_cross_match.py`, `test_io.py`, `test_models.py`, `test_preprocessing.py` — unit tests
-- `test_technosignature.py` — Dyson-sphere SED fit; `test_cli.py` — CLI config; `test_web.py` — API, static build,
+- `test_technosignature.py` — Dyson-sphere SED fit; `test_cli.py` — CLI config; `test_robust_z.py` — σ-scaled z;
+  `test_ensemble_scale.py` — Tier 3 common scale; `test_synthetic.py` — clean-population false-positive rate;
+  `test_multi_catalog.py` — `--multi` cross-match; `test_web.py` — API, static build,
   JS engine (no network)
 
 ## Module Dependencies
