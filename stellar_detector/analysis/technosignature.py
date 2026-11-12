@@ -135,7 +135,7 @@ class TechnosignatureAnalyzer:
                     best_f = f_cover
 
         # Also fit star-only model
-        star_flux = _planck_flux(wavelengths, teff_star)
+        star_flux = self._combined_sed(wavelengths, teff_star, teff_star, 0.0)
         star_norm = star_flux / np.max(star_flux) if np.max(star_flux) > 0 else star_flux
         star_rmse = np.sqrt(np.mean((fluxes_norm - star_norm) ** 2))
 
@@ -286,14 +286,20 @@ class TechnosignatureAnalyzer:
     def _combined_sed(
         wavelengths: np.ndarray, t_star: float, t_ds: float, f_cover: float
     ) -> np.ndarray:
-        """Combined SED of a star partially enclosed by a Dyson sphere."""
-        star_flux = (1 - f_cover) * _planck_flux(wavelengths, t_star)
-        ds_flux = f_cover * _planck_flux(wavelengths, t_ds)
+        """Combined F_nu SED of a star partially enclosed by a Dyson sphere.
+
+        Energy conserving (Project Hephaistos): the sphere absorbs a fraction ``f_cover`` of the
+        starlight and re-radiates it as a blackbody at ``t_ds``, so each component is a blackbody
+        normalised to its share of the bolometric flux. F_nu matches the observed fluxes, which are
+        converted from magnitudes with zero points in Jy.
+        """
+        star_flux = (1 - f_cover) * _blackbody_fnu_unit_bolometric(wavelengths, t_star)
+        ds_flux = f_cover * _blackbody_fnu_unit_bolometric(wavelengths, t_ds)
         return star_flux + ds_flux
 
 
 def _planck_flux(wavelengths_um: np.ndarray, temperature: float) -> np.ndarray:
-    """Planck function B_lambda in relative units.
+    """Planck function B_nu (per unit frequency, SI units) at the given wavelengths.
 
     Args:
         wavelengths_um: Wavelengths in microns.
@@ -302,9 +308,13 @@ def _planck_flux(wavelengths_um: np.ndarray, temperature: float) -> np.ndarray:
     h = 6.626e-34
     c = 2.998e8
     k_b = 1.381e-23
-    wavelengths_m = wavelengths_um * 1e-6
+    nu = c / (np.asarray(wavelengths_um, dtype=float) * 1e-6)
 
     with np.errstate(over="ignore", divide="ignore"):
-        exponent = h * c / (wavelengths_m * k_b * temperature)
-        exponent = np.clip(exponent, 0, 500)
-        return (2 * h * c ** 2 / wavelengths_m ** 5) / (np.exp(exponent) - 1 + 1e-30)
+        exponent = np.clip(h * nu / (k_b * temperature), 1e-12, 700)
+        return (2 * h * nu ** 3 / c ** 2) / np.expm1(exponent)
+
+
+def _blackbody_fnu_unit_bolometric(wavelengths_um: np.ndarray, temperature: float) -> np.ndarray:
+    """B_nu(T) / T^4: the F_nu shape of a blackbody carrying a fixed bolometric flux."""
+    return _planck_flux(wavelengths_um, temperature) / temperature ** 4
