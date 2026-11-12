@@ -1,0 +1,13 @@
+# Web interface, static-site build and tests (pinned). The analysis needs numpy, pandas, scipy, scikit-learn and
+# astropy; astroquery is only used when the local app fetches a catalogue.
+fastapi==0.162.2
+httpx==0.28.1
+pytest==9.2.0
+uvicorn==0.54.0
+python-multipart==0.0.33
+numpy==2.5.4
+pandas==3.1.1
+scipy==1.18.1
+scikit-learn==1.9.1
+astropy==8.0.2
+astroquery==0.4.11

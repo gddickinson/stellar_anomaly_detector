@@ -31,7 +31,13 @@ python -m stellar_detector.cli --multi gaia,hipparcos --stars 1000 --report
 
 # GUI
 python -m stellar_detector.cli --gui
+
+# Web app (http://127.0.0.1:8233) and static site
+python run_web.py
+python scripts/build_static.py
 ```
+
+Session history and open decisions: SESSION_LOG.md. Demo data provenance: THIRD_PARTY.md.
 
 ## Key Design Decisions
 

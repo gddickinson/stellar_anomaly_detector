@@ -5,3 +5,5 @@
 /stellar_detector/data/__pycache__
 /stellar_detector/__pycache__
 /stellar_data/cache
+site/
+__pycache__/

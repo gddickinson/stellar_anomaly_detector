@@ -102,7 +102,33 @@
 
 ### `cli.py` — Command-Line Interface
 - `main()` — Entry point: parse args, fetch data, run all analyzers, aggregate, output
+- `config_from_args(args)` — DetectionConfig from CLI args (`--outlier-threshold` sets `mad_threshold`)
 - Supports `--gui`, `--source`, `--multi`, `--file`, `--stars`, `--report`, `--format`
+
+### `web/` — Web interface (FastAPI + plain ES modules) and static-site data
+- **`app.py`** — FastAPI app: `/api/info`, `/api/runs/{id}/summary|stars|detections|candidates|star/{sid}`,
+  `/api/docs/readme`, `POST /api/run` (fetch / demo re-run), `POST /api/run/upload` (CSV); `STATIC_ENDPOINTS`
+- **`pipeline.py`** — `run_pipeline(raw, config, source)`: preprocess + the six analyzers + `EnsembleScorer`, JSON
+  conversion; `ensemble_with_tiers()`, `hr_band()`, `make_config()` (validated overrides), `CONFIG_FIELDS`
+- **`runs.py`** — demo field (`demo/gaia_dr3_kic8462852_field.csv`, cached run), `new_run()`, `upload_run()`,
+  `summary()`, `star_detail()`, small LRU of local runs
+- **`static/`** — front end: `index.html`, `core.js` + `style.css` (shared kit), `style_app.css`, `main.js` (router),
+  `static_api.js` (static-site data layer), `state.js` (current run, loaders), `fmt.js`, `plot.js` (canvas scatter,
+  SVG histogram), `md.js`; pages `home.js`, `run.js`, `plots.js`, `candidates.js`, `scores.js`, `star.js`, `docs.js`;
+  `ensemble_engine.js` (JS port of `EnsembleScorer`) + `ensemble_engine.test.mjs` (node, against the Python fixture)
+
+### Repo root (web)
+- **`run_web.py`** — starts the web app on http://127.0.0.1:8233
+- **`scripts/build_static.py`** — exports the static site (STATIC_ENDPOINTS as JSON) to `site/`
+- **`scripts/screenshots.py`** — Playwright smoke test and README screenshots (`docs/img/`)
+- **`scripts/make_ensemble_fixture.py`** — writes `tests/fixtures/ensemble_fixture.json` (Python ensemble output)
+- **`.github/workflows/pages.yml`** — tests, builds and publishes the static site on push to main
+- **`requirements-web.txt`** — pinned web/test dependencies; **`THIRD_PARTY.md`** — demo data source and licence
+
+### `tests/`
+- `test_analysis.py`, `test_cross_match.py`, `test_io.py`, `test_models.py`, `test_preprocessing.py` — unit tests
+- `test_technosignature.py` — Dyson-sphere SED fit; `test_cli.py` — CLI config; `test_web.py` — API, static build,
+  JS engine (no network)
 
 ## Module Dependencies
 
@@ -121,4 +147,6 @@ cli.py / gui/main_window.py
   │     ├── job_manager, workers
   │     └── theme
   └── utils/ (io, logging_config, session, annotations, export)
+
+web/app.py -> web/runs.py -> web/pipeline.py -> data/ (fetcher, preprocessing), analysis/ (six analyzers, ensemble)
 ```

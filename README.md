@@ -139,9 +139,45 @@ stellar_anomaly_detector/
 │       ├── session.py            # Workspace save/restore
 │       ├── annotations.py        # Anomaly tagging and comments
 │       └── export.py             # Publication exports (LaTeX, SVG, PDF)
-├── tests/                        # Unit tests (64 tests)
+├── tests/                        # Unit tests (79) + web tests (tests/test_web.py)
 └── stellar_data/                 # Local data cache
 ```
+
+## Web interface
+
+A local web app and a static showcase site run the same pipeline in the browser-facing form: catalogue download,
+quality cuts, the six detection modules, the ensemble scorer, and plots drawn client-side from JSON.
+
+**Live static site:** https://gddickinson.github.io/stellar_anomaly_detector/ (published from `main` by
+`.github/workflows/pages.yml`). It shows a demo field, all 4,112 Gaia DR3 sources within 0.15° of KIC 8462852
+(Boyajian's star), analysed by the Python pipeline at build time; the Scores page re-applies the ensemble rules in your
+browser (a JS port of `EnsembleScorer`, tested against the Python output). Fetching other regions or catalogues,
+uploading a CSV and changing detection settings need the local app.
+
+### Run the web app
+
+```bash
+pip install -r requirements-web.txt
+python run_web.py                      # http://127.0.0.1:8233
+python scripts/build_static.py         # static site into site/
+python -m pytest -q tests/test_web.py  # web tests (no network)
+```
+
+Pages: **Run** (fetch any catalogue/sky region, upload a CSV, change thresholds), **Plots** (HR diagram with the
+main-sequence model and threshold band, proper motions, Teff–[M/H], velocity, sky; click a star), **Candidates**
+(ranked ensemble selection with tiers, CSV export), **Scores** (detections per module and method, significance
+distributions, ensemble-rule explorer), **Star** (all detections and catalogue values for one star), **Method** and
+**About**.
+
+Every flag is a statistical outlier relative to the field or a departure from simple models; most have ordinary
+astrophysical explanations. An outlier is a reason to look closer, not evidence of technology.
+
+| | |
+|---|---|
+| ![Home](docs/img/home.png) | ![HR diagram](docs/img/plots.png) |
+| ![Candidates](docs/img/candidates.png) | ![Scores](docs/img/scores.png) |
+
+Demo data: ESA/Gaia/DPAC, Gaia DR3 (CC BY-SA 3.0 IGO); see [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## License
 

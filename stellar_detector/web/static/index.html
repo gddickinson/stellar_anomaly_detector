@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stellar Anomaly Detector</title>
+<meta name="description" content="Fetch stars from astronomical catalogues, run eight statistical and machine-learning outlier detectors and an ensemble scorer, and inspect the ranked candidates. Outliers are prompts for follow-up, not evidence of technology.">
+<link rel="icon" href="static/icon.svg">
+<link rel="stylesheet" href="static/style.css">
+<link rel="stylesheet" href="static/style_app.css">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<header class="top">
+  <a class="brand" href="#/"><span class="mark"></span>Stellar Anomaly Detector</a>
+  <nav class="groups" aria-label="Main">
+    <a href="#/run" data-nav="run">Run</a>
+    <a href="#/plots" data-nav="plots">Plots</a>
+    <a href="#/candidates" data-nav="candidates">Candidates</a>
+    <a href="#/scores" data-nav="scores">Scores</a>
+    <a href="#/method" data-nav="method">Method</a>
+    <a href="#/about" data-nav="about">About</a>
+  </nav>
+  <div class="right"><a class="small mute" href="https://github.com/gddickinson/stellar_anomaly_detector" target="_blank" rel="noopener">GitHub</a></div>
+</header>
+<main id="app" tabindex="-1"></main>
+<footer class="foot">Stellar Anomaly Detector · <a href="https://github.com/gddickinson/stellar_anomaly_detector">source on GitHub</a> · Gaia DR3 data: ESA/Gaia/DPAC (CC BY-SA 3.0 IGO) · <span id="mode"></span></footer>
+<script type="module" src="static/main.js"></script>
+</body>
+</html>
