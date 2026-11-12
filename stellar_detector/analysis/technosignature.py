@@ -142,11 +142,11 @@ class TechnosignatureAnalyzer:
         # Candidate if DS model is significantly better AND within RMSE threshold
         improvement = star_rmse - best_rmse
         if best_rmse < self.config.dyson_sed_rmse_max and improvement > 0.05:
-            # Check W3/W4 SNR requirements
+            # Check W3/W4 SNR requirements (no error = AllWISE upper limit = not detected)
             w3_err = row.get("e_W3mag", 0.3)
             w4_err = row.get("e_W4mag", 0.3)
-            w3_snr = 1.0 / (w3_err + 0.01) if pd.notna(w3_err) else 5.0
-            w4_snr = 1.0 / (w4_err + 0.01) if pd.notna(w4_err) else 5.0
+            w3_snr = 1.0 / (w3_err + 0.01) if pd.notna(w3_err) else 0.0
+            w4_snr = 1.0 / (w4_err + 0.01) if pd.notna(w4_err) else 0.0
 
             if w3_snr >= self.config.dyson_snr_min and w4_snr >= self.config.dyson_snr_min:
                 confidence = min(1.0, improvement / 0.2)

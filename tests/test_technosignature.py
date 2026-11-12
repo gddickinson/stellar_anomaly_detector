@@ -60,3 +60,9 @@ def test_analyze_end_to_end_flags_only_the_excess_star():
     df = pd.DataFrame([_star_row(5800.0, name="plain"), _star_row(5800.0, 0.5, 350.0, name="shell")])
     found = [r for r in TechnosignatureAnalyzer().analyze(df) if r.detection_method == "hephaistos_sed_grid"]
     assert [r.star_id for r in found] == ["shell"]
+
+
+def test_upper_limit_in_w4_is_not_a_detection():
+    """AllWISE gives no magnitude error for upper limits: such a band must fail the SNR requirement."""
+    row = pd.Series({**_star_row(5800.0, 0.5, 350.0), "e_W4mag": np.nan})
+    assert TechnosignatureAnalyzer()._fit_dyson_model(row) is None
