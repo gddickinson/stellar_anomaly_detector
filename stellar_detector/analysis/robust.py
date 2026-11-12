@@ -20,3 +20,19 @@ def robust_center_scale(values) -> tuple[float, float]:
     center = float(np.median(v))
     scale = float(median_abs_deviation(v, scale="normal"))
     return center, scale if scale > 0 else float(np.std(v))
+
+
+def rank_sigma(population, value: float) -> float:
+    """Gaussian-equivalent sigma of ``value``'s upper-tail rank in ``population`` (higher = more extreme).
+
+    p = (k - 0.5) / N with k the number of population values >= value; sigma = isf(p). The largest
+    possible value is isf(0.5 / N), so a rank says nothing more extreme than the sample size allows.
+    """
+    from scipy.stats import norm
+
+    pop = np.asarray(population, dtype=float)
+    pop = pop[np.isfinite(pop)]
+    if pop.size == 0 or not np.isfinite(value):
+        return 0.0
+    k = max(1, int(np.sum(pop >= value)))
+    return float(norm.isf((k - 0.5) / pop.size))

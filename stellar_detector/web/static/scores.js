@@ -6,13 +6,14 @@ import { MODULE_COLORS, MODULE_NAMES, TIER_COLORS, dot, f, nice, tierDot } from 
 import { histogram } from './plot.js';
 import { getCandidates, getDetections, getInfo, getSummary, runBar, runId, wireRunBar } from './state.js';
 
+// Each module's own significance score (ranking) and, after ";", its value on the common σ scale of the Tier 3 cut.
 const SCALE = {
-  hr: 'max over the agreeing methods: |z| of the main-sequence test, or fixed 6.0 (DBSCAN), 5.5 (KDE), 5.0 (GMM)',
-  lifetime: '10 × age fraction (fraction of the ZAMS→TAMS band crossed, clipped at 1.5); flagged above 0.9, so always ≥ 9',
-  kinematics: 'robust |z| in σ (proper motion, velocity), RUWE × 3, or excess-noise significance',
-  spectral: '|z| (metallicity), 10 × |Isolation Forest score|, or 5 × |LOF score|',
-  technosignature: '50 × RMSE improvement (Dyson fit), |z| (WISE colours), v_tan / 50 (stellar engine)',
-  ml: '10 × weighted ensemble score; flagged above the ensemble threshold, so always ≥ 10 × threshold',
+  hr: 'max over the agreeing methods: |z| of the main-sequence test, or fixed 6.0 (DBSCAN), 5.5 (KDE), 5.0 (GMM); σ scale: the main-sequence |z| if that test agreed, else none',
+  lifetime: '10 × age fraction (fraction of the ZAMS→TAMS band crossed, clipped at 1.5); flagged above 0.9, so always ≥ 9; σ scale: rank of the age fraction among the stars tested (at most ≈ 3 σ for 800 stars)',
+  kinematics: 'robust |z| in σ (proper motion, velocity), RUWE × 3, or excess-noise significance; σ scale: |z| or excess-noise significance; RUWE has none',
+  spectral: '|z| (metallicity), 10 × |Isolation Forest score|, or 5 × |LOF score|; σ scale: the metallicity |z| if that test agreed, else none',
+  technosignature: '50 × RMSE improvement (Dyson fit), |z| (WISE colours), v_tan / 50 (stellar engine); σ scale: |z| (WISE colours); Dyson and engine candidates use the confidence rule',
+  ml: '10 × weighted ensemble score; flagged above the ensemble threshold, so always ≥ 10 × threshold; σ scale: rank of the ensemble score among the stars scored',
 };
 
 route('scores', async (args, query) => {
@@ -28,9 +29,10 @@ route('scores', async (args, query) => {
       <td class="desc small">${esc(SCALE[m.id] || '')}</td></tr>`).join('')}</tbody></table></div>
     <h2>Significance by module</h2>
     <div class="charts">${sum.modules.filter(m => m.n).map(m => `<div class="panel"><h3>${esc(MODULE_NAMES[m.id])}</h3>
-      ${histogram(byMod(m).map(d => d.significance_score), { xlabel: 'significance score', bins: 20, marks: [{ x: info.ensemble.single_min_significance, label: 'Tier 3 cut' }] })}</div>`).join('')}</div>
-    <p class="small mute">The dashed line is the ensemble's single-method cut (significance ≥ ${info.ensemble.single_min_significance}).
-      Because the scales differ, the same cut is strict for some modules and automatically passed by others.</p>
+      ${histogram(byMod(m).map(d => d.common_significance), { xlabel: 'common significance (σ)', bins: 20, marks: [{ x: info.ensemble.single_min_significance, label: 'Tier 3 cut' }] })}</div>`).join('')}</div>
+    <p class="small mute">Detections on the common σ scale the ensemble's single-method cut uses (dashed line, ≥ ${info.ensemble.single_min_significance} σ).
+      Scores with no σ meaning (DBSCAN/KDE/GMM fixed values, RUWE, Isolation Forest/LOF) are 0 here: they can be selected only together with
+      other detections (Tier 1 or 2). Rank-based values cannot exceed what the sample size allows.</p>
     <h2>Ensemble explorer</h2>
     <p>Re-apply the ensemble rules to these raw detections with other settings, in your browser. With the defaults this reproduces
       the Python result exactly (${cands.length} candidates); the code is a port of <code>EnsembleScorer</code> tested against it.</p>
@@ -45,7 +47,7 @@ route('scores', async (args, query) => {
   const sliders = [
     slider(rules, { id: 't1', label: 'Tier 1: minimum independent families', min: 2, max: 6, value: o.tier1_min_families }, v => { o.tier1_min_families = v; run(); }),
     slider(rules, { id: 't2', label: 'Tier 2: minimum methods for one type', min: 2, max: 4, value: o.tier2_min_methods }, v => { o.tier2_min_methods = v; run(); }),
-    slider(rules, { id: 't3', label: 'Tier 3: minimum single-method significance', min: 2, max: 30, step: 0.5, value: o.single_min_significance }, v => { o.single_min_significance = v; run(); }),
+    slider(rules, { id: 't3', label: 'Tier 3: minimum single-method significance (σ)', min: 2, max: 30, step: 0.5, value: o.single_min_significance }, v => { o.single_min_significance = v; run(); }),
     slider(rules, { id: 'hi', label: 'High-importance types: minimum confidence', min: 0.5, max: 1, step: 0.05, value: o.high_importance_min_confidence, fmt: v => v.toFixed(2) }, v => { o.high_importance_min_confidence = v; run(); }),
   ];
   function run() {

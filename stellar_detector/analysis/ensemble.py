@@ -11,8 +11,8 @@ Scoring tiers:
     These are the strongest candidates.
   - Tier 2: High-confidence single-category detection confirmed by 2+ independent
     methods within that category (e.g., DBSCAN + KDE + z-score all agree on HR outlier).
-  - Tier 3: Extreme single-method detection — only if significance is very high
-    (z > 6) or the anomaly type has intrinsic scientific importance (e.g., Dyson
+  - Tier 3: Extreme single-method detection — only if significance on the common
+    sigma scale (see common_significance) is >= 6, or the anomaly type has intrinsic scientific importance (e.g., Dyson
     sphere candidate, stellar engine).
 
 Stars that are merely in the statistical tail of one distribution are NOT reported
@@ -42,6 +42,26 @@ HIGH_IMPORTANCE_TYPES = {
 
 # Minimum significance for a single-method detection to be reported on its own
 SINGLE_METHOD_MIN_SIGNIFICANCE = 6.0
+
+# Detection methods whose significance_score is NOT a sigma-like value (fixed scores, 10 x a
+# fraction or ML score, RUWE x 3, 10 x |IF score|, 5 x |LOF score|, SED-fit improvement, v_tan / 50).
+# Alone they can pass the single-method cut only through statistical_tests["sigma_equiv"]. Every
+# other method (robust z-scores, excess-noise significance) reports significance in sigma.
+NON_SIGMA_METHODS = {
+    "lifetime_isochrone", "ml_ensemble", "dbscan_cmd", "kde_density", "gmm_cmd",
+    "chemical_isolation_forest", "teff_metallicity_lof", "ruwe_threshold",
+    "hephaistos_sed_grid", "kinematics_ir_combined",
+}
+
+
+def common_significance(d: AnomalyResult) -> float:
+    """Significance on the common sigma scale used by the single-method (Tier 3) cut."""
+    if "sigma_equiv" in d.statistical_tests:
+        return float(d.statistical_tests["sigma_equiv"])
+    if d.detection_method in NON_SIGMA_METHODS or d.detection_method.startswith("hr_consensus"):
+        return 0.0
+    return float(d.significance_score)
+
 
 # Minimum number of independent methods within one anomaly type for Tier 2
 TIER2_MIN_METHODS = 2
@@ -149,8 +169,10 @@ class EnsembleScorer:
         best = max(detections, key=lambda d: d.significance_score)
         if best.anomaly_type in HIGH_IMPORTANCE_TYPES and best.confidence >= 0.7:
             return 3, best
-        if best.significance_score >= SINGLE_METHOD_MIN_SIGNIFICANCE:
-            return 3, best
+        # Single-method cut on the common sigma scale (module scores are not comparable)
+        strongest = max(detections, key=common_significance)
+        if common_significance(strongest) >= SINGLE_METHOD_MIN_SIGNIFICANCE:
+            return 3, strongest
 
         # Not anomalous enough to report
         return 0, None

@@ -44,13 +44,16 @@ route('method', async () => {
       chemical, evolutionary, technosignature, infrared, ...). A star is selected as</p>
     <ul><li><b>Tier 1</b> if its detections span ≥ ${e.tier1_min_families} families;</li>
       <li><b>Tier 2</b> if one anomaly type is found by ≥ ${e.tier2_min_methods} different methods;</li>
-      <li><b>Tier 3</b> if its strongest single detection has significance ≥ ${e.single_min_significance}, or is a high-importance type
+      <li><b>Tier 3</b> if one detection reaches ≥ ${e.single_min_significance} on the common σ scale (below), or is a high-importance type
         (${e.high_importance_types.map(esc).join(', ')}) with confidence ≥ ${e.high_importance_min_confidence}.</li></ul>
     <p>Candidates are ranked by follow-up priority, then significance.</p>
-    <div class="callout"><b>Caveat on Tier 3.</b> Significance is not on one scale: it is |z| for the z-score tests but
-      10 × age fraction for the lifetime test (always ≥ 9 when flagged) and 10 × ensemble score for the ML pipeline (always ≥ 7 with the
-      defaults). Every lifetime or ML detection therefore passes the Tier 3 cut, and in the demo field Tier 3 is mostly evolved stars
-      from the lifetime test. The <a href="#/scores">Scores</a> page lets you see what changes with other rules.</div>
+    <div class="callout"><b>The common σ scale.</b> Each module's own significance score is not comparable across modules (|z| for
+      z-score tests, 10 × age fraction for the lifetime test, 10 × ensemble score for the ML pipeline, fixed values for DBSCAN/KDE/GMM).
+      The single-method cut therefore uses a common scale (<code>ensemble.common_significance</code>): robust |z| in σ for z-score tests;
+      for the lifetime and ML tests the star's rank among all stars tested, converted to a Gaussian σ (so it can never exceed what the
+      sample size allows, about 3 σ for 800 stars); for the HR and spectral consensus the main-sequence or metallicity |z| if that test
+      agreed; and none for scores without a σ meaning. Those detections can still be selected together with others (Tier 1 or 2).
+      The <a href="#/scores">Scores</a> page shows the values and lets you change the rules.</div>
     <h2>4. Reading the results</h2>
     <p>The modules compare each star with the others in the same field and with simple analytic models. A flagged star is unusual by
       those measures. In a field of a few hundred stars, a handful will be: the nearest dwarfs move fastest, giants lie above the main

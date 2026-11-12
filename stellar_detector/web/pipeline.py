@@ -17,7 +17,7 @@ import pandas as pd
 from ..analysis.robust import robust_center_scale
 from ..analysis.ensemble import (
     HIGH_IMPORTANCE_TYPES, SINGLE_METHOD_MIN_SIGNIFICANCE, TIER1_MIN_TYPE_FAMILIES, TIER2_MIN_METHODS,
-    TYPE_FAMILIES, EnsembleScorer,
+    TYPE_FAMILIES, EnsembleScorer, common_significance,
 )
 from ..analysis.hr_diagram import HRDiagramAnalyzer
 from ..analysis.kinematics import KinematicsAnalyzer
@@ -100,6 +100,7 @@ def result_dict(r: AnomalyResult, module: str | None = None) -> dict:
         "star_id": r.star_id, "anomaly_type": r.anomaly_type.anomaly_name,
         "family": TYPE_FAMILIES.get(r.anomaly_type, r.anomaly_type.anomaly_name),
         "confidence": r.confidence, "significance_score": r.significance_score,
+        "common_significance": common_significance(r),
         "follow_up_priority": r.follow_up_priority, "detection_method": r.detection_method,
         "description": r.description, "parameters": r.parameters, "statistical_tests": r.statistical_tests,
         "observational_recommendations": r.observational_recommendations,

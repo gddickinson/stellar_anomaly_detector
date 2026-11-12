@@ -68,6 +68,13 @@ class HRDiagramAnalyzer:
                     f"{best.description} [HR consensus: {len(methods)}/4 methods]"
                 )
                 best.detection_method = f"hr_consensus({','.join(sorted(methods))})"
+                # common sigma scale: the main-sequence robust |z| if that test agreed; the
+                # fixed DBSCAN/KDE/GMM scores have none
+                ms = [d for d in detections if d.detection_method == "main_sequence_robust_zscore"]
+                best.statistical_tests = {
+                    **best.statistical_tests,
+                    "sigma_equiv": abs(ms[0].statistical_tests["z_score"]) if ms else 0.0,
+                }
                 results.append(best)
 
         logger.info(

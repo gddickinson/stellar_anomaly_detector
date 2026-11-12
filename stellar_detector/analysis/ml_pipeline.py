@@ -15,6 +15,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import OneClassSVM
 
+from .robust import rank_sigma
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,9 @@ class MLPipeline:
                 follow_up_priority=min(10, max(1, int(ensemble_scores[i] * 10))),
                 detection_method="ml_ensemble",
                 statistical_tests={
-                    k: float(v[i]) for k, v in scores.items() if v is not None
+                    **{k: float(v[i]) for k, v in scores.items() if v is not None},
+                    # rank of the ensemble score among all stars scored, as a Gaussian sigma
+                    "sigma_equiv": rank_sigma(ensemble_scores, ensemble_scores[i]),
                 },
                 catalog_source=str(row.get("catalog_source", "")),
             ))

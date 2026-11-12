@@ -19,7 +19,7 @@ from stellar_detector.web.runs import demo_run  # noqa: E402
 
 OUT = ROOT / "tests" / "fixtures" / "ensemble_fixture.json"
 KEYS = ("star_id", "anomaly_type", "family", "detection_method", "confidence", "significance_score",
-        "follow_up_priority", "description", "module")
+        "follow_up_priority", "description", "module", "common_significance")
 CASES = [
     {"name": "defaults", "opts": {}},
     {"name": "strict single-method", "opts": {"single_min_significance": 12.0}},
@@ -33,7 +33,8 @@ def to_result(d: dict) -> AnomalyResult:
     return AnomalyResult(
         star_id=d["star_id"], anomaly_type=BY_NAME[d["anomaly_type"]], confidence=d["confidence"],
         significance_score=d["significance_score"], parameters={}, description=d["description"],
-        follow_up_priority=d["follow_up_priority"], detection_method=d["detection_method"], statistical_tests={})
+        follow_up_priority=d["follow_up_priority"], detection_method=d["detection_method"],
+        statistical_tests={"sigma_equiv": d["common_significance"]})
 
 
 def python_output(detections: list[dict], opts: dict) -> list[dict]:

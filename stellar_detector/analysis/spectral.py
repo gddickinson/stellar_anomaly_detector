@@ -46,6 +46,11 @@ class SpectralAnalyzer:
             methods = set(d.detection_method for d in detections)
             if len(methods) >= 2:
                 best = max(detections, key=lambda d: d.significance_score)
+                met = [d for d in detections if d.detection_method == "metallicity_mad"]
+                best.statistical_tests = {
+                    **best.statistical_tests,
+                    "sigma_equiv": abs(met[0].statistical_tests["z_score"]) if met else 0.0,
+                }
                 results.append(best)
 
         logger.info(

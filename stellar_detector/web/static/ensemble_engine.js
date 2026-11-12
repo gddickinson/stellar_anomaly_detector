@@ -3,7 +3,8 @@
 // detections (ensemble_engine.test.mjs, fixture from scripts/make_ensemble_fixture.py).
 //
 // detections: [{star_id, anomaly_type, family, detection_method, confidence, significance_score, follow_up_priority,
-//               description, module}]
+//               description, module, common_significance}]  (common_significance: the sigma scale of the
+//               single-method cut, ensemble.common_significance)
 // opts: {modules: Set|null, tier1_min_families, tier2_min_methods, single_min_significance,
 //        high_importance_types: [...], high_importance_min_confidence}
 
@@ -57,9 +58,10 @@ export function evaluateStar(sid, dets, o = DEFAULTS) {
     if (methods.size >= o.tier2_min_methods) return tier2(sid, type, td, methods);
   }
   const b = best(dets);
-  const keep = (o.high_importance_types.includes(b.anomaly_type) && b.confidence >= o.high_importance_min_confidence)
-    || b.significance_score >= o.single_min_significance;
-  return keep ? { ...b, tier: 3, families: undefined } : null;
+  if (o.high_importance_types.includes(b.anomaly_type) && b.confidence >= o.high_importance_min_confidence) return { ...b, tier: 3 };
+  // single-method cut on the common sigma scale; Python max() keeps the first maximal element
+  const s = dets.reduce((x, d) => (d.common_significance > x.common_significance ? d : x));
+  return s.common_significance >= o.single_min_significance ? { ...s, tier: 3 } : null;
 }
 
 // EnsembleScorer.aggregate with tiers, ranked by (priority, significance) descending (stable, like Python's sort).

@@ -13,6 +13,7 @@ import pandas as pd
 
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 from ..models.stellar_evolution import StellarEvolutionModels
+from .robust import rank_sigma
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,11 @@ class StellarLifetimeAnalyzer:
                 ),
                 follow_up_priority=min(10, max(1, int(age_frac * 10))),
                 detection_method="lifetime_isochrone",
-                statistical_tests={"age_fraction": float(age_frac)},
+                statistical_tests={
+                    "age_fraction": float(age_frac),
+                    # rank of the age fraction among all stars tested, as a Gaussian sigma
+                    "sigma_equiv": rank_sigma(clean["age_fraction"].values, age_frac),
+                },
                 catalog_source=str(row.get("catalog_source", "")),
             ))
 
