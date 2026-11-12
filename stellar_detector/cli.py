@@ -45,6 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
              "(default: DetectionConfig, 4.0)",
     )
     parser.add_argument("--contamination", type=float, default=0.03)
+    parser.add_argument(
+        "--match-radius", type=float, default=None,
+        help="--multi: cross-match radius in arcsec (default: DetectionConfig, 5.0)",
+    )
 
     # Cache / output options
     parser.add_argument("--no-cache", action="store_true", help="Skip cache, force fresh download")
@@ -66,6 +70,30 @@ def config_from_args(args: argparse.Namespace) -> DetectionConfig:
         config.outlier_threshold = args.outlier_threshold
         config.mad_threshold = args.outlier_threshold
     return config
+
+
+def load_multi(fetcher, args: argparse.Namespace, config: DetectionConfig, use_cache: bool = True):
+    """--multi: fetch each catalogue and cross-match the others onto the first by position.
+
+    One row per star of the first catalogue (e.g. Gaia), with the other catalogues' photometry
+    (e.g. AllWISE W1-W4) added when a source lies within the match radius, so multi-band tests
+    such as the Dyson-sphere SED fit see all bands on the same star.
+    """
+    from .core.constants import CATALOG_METADATA
+    from .data.cross_match import merge_catalogs
+
+    sources = [SOURCE_MAP[c.strip()] for c in args.multi.split(",")]
+    frames = {
+        s.value: fetcher.fetch(s, n_stars=args.stars, ra_center=args.ra, dec_center=args.dec,
+                               radius_deg=args.radius, use_cache=use_cache)
+        for s in sources
+    }
+    names = list(frames)
+    radius = args.match_radius if args.match_radius is not None else config.cross_match_radius_arcsec
+    epochs = {k: v["epoch"] for k, v in CATALOG_METADATA.items() if "epoch" in v}
+    others = {n: frames[n] for n in names[1:]}
+    return merge_catalogs(frames[names[0]], others, radius_arcsec=radius, epochs=epochs,
+                          primary_name=names[0])
 
 
 SOURCE_MAP = {
@@ -108,15 +136,7 @@ def main():
     if args.file:
         df = load_catalog_csv(args.file)
     elif args.multi:
-        catalogs = [SOURCE_MAP[c.strip()] for c in args.multi.split(",")]
-        frames = []
-        for cat in catalogs:
-            frames.append(fetcher.fetch(cat, n_stars=args.stars,
-                                        ra_center=args.ra, dec_center=args.dec,
-                                        radius_deg=args.radius,
-                                        use_cache=use_cache))
-        import pandas as pd
-        df = pd.concat(frames, ignore_index=True)
+        df = load_multi(fetcher, args, config, use_cache=use_cache)
     else:
         source = SOURCE_MAP[args.source]
         df = fetcher.fetch(source, n_stars=args.stars,

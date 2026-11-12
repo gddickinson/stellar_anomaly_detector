@@ -73,7 +73,8 @@ python -m stellar_detector.cli --source synthetic --stars 2000
 # Fetch and analyze Gaia DR3 data
 python -m stellar_detector.cli --source gaia --stars 5000
 
-# Multi-catalog analysis with HTML report
+# Multi-catalog analysis with HTML report: the other catalogues are cross-matched onto the first by
+# position (--match-radius arcsec, default 5) with epoch propagation; one row per star of the first catalogue
 python -m stellar_detector.cli --multi gaia,hipparcos --stars 1000 --report
 
 # Launch the GUI

@@ -136,3 +136,53 @@ class CrossCatalogMatcher:
                 fom *= 1.0 / (plx_err + 0.01)
 
         return fom
+
+
+# Columns that identify or locate a source; never copied from a secondary catalogue as data.
+_ID_COLUMNS = {"source_id", "ra", "dec", "catalog_source"}
+
+
+def merge_catalogs(
+    primary: pd.DataFrame,
+    others: dict[str, pd.DataFrame],
+    radius_arcsec: float,
+    epochs: dict[str, float],
+    primary_name: str = "primary",
+) -> pd.DataFrame:
+    """Cross-match each secondary catalogue onto ``primary`` by position and add its columns.
+
+    One row per primary star. The primary's positions are propagated with its proper motions to
+    each secondary catalogue's epoch, and each secondary source is assigned to at most one primary
+    star (the nearest) within ``radius_arcsec``. New columns keep their names (e.g. ``W3mag``,
+    ``Jmag``); columns the primary already has are added as ``<col>_<name>``. ``<name>_id`` and
+    ``<name>_sep_arcsec`` record the match. Unmatched primary stars get NaN.
+    """
+    out = primary.reset_index(drop=True).copy()
+    matcher = CrossCatalogMatcher(max_separation_arcsec=radius_arcsec)
+    epoch_a = epochs.get(primary_name, 2016.0)
+    for name, other in others.items():
+        other = other.reset_index(drop=True)
+        epoch_b = epochs.get(name, epoch_a)
+        ca = matcher._build_skycoord(out, epoch_a, epoch_b)
+        cb = matcher._build_skycoord(other, epoch_b, epoch_b)
+        if ca is None or cb is None or len(other) == 0:
+            continue
+        idx, sep2d, _ = ca.match_to_catalog_sky(cb)
+        pairs = pd.DataFrame({"a": np.arange(len(out)), "b": idx, "sep": sep2d.arcsec})
+        pairs = pairs[pairs["sep"] <= radius_arcsec].sort_values("sep")
+        pairs = pairs.drop_duplicates("b")  # one primary star per secondary source: the nearest
+        logger.info("Merged %s: %d / %d %s stars matched within %.1f arcsec",
+                    name, len(pairs), len(out), primary_name, radius_arcsec)
+        out[f"{name}_id"] = pd.Series(dtype=object)
+        out[f"{name}_sep_arcsec"] = np.nan
+        if "source_id" in other.columns:
+            out.loc[pairs["a"].values, f"{name}_id"] = other["source_id"].astype(str).values[pairs["b"].values]
+        out.loc[pairs["a"].values, f"{name}_sep_arcsec"] = pairs["sep"].values
+        for col in other.columns:
+            if col in _ID_COLUMNS:
+                continue
+            dest = f"{col}_{name}" if col in out.columns else col
+            values = pd.Series(np.nan, index=out.index, dtype=object if other[col].dtype == object else float)
+            values.loc[pairs["a"].values] = other[col].values[pairs["b"].values]
+            out[dest] = values
+    return out
