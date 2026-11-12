@@ -9,7 +9,7 @@ import { getCandidates, getDetections, getInfo, getSummary, runBar, runId, wireR
 const SCALE = {
   hr: 'max over the agreeing methods: |z| of the main-sequence test, or fixed 6.0 (DBSCAN), 5.5 (KDE), 5.0 (GMM)',
   lifetime: '10 × age fraction (fraction of the ZAMS→TAMS band crossed, clipped at 1.5); flagged above 0.9, so always ≥ 9',
-  kinematics: '|z| in MAD units (proper motion, velocity), RUWE × 3, or excess-noise significance',
+  kinematics: 'robust |z| in σ (proper motion, velocity), RUWE × 3, or excess-noise significance',
   spectral: '|z| (metallicity), 10 × |Isolation Forest score|, or 5 × |LOF score|',
   technosignature: '50 × RMSE improvement (Dyson fit), |z| (WISE colours), v_tan / 50 (stellar engine)',
   ml: '10 × weighted ensemble score; flagged above the ensemble threshold, so always ≥ 10 × threshold',

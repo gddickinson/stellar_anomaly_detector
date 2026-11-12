@@ -48,7 +48,7 @@ route('plots', async (args, query) => {
     <div class="legend">${legend}</div>
     <div id="plot"></div>
     ${view === 'hr' && hr.center !== null ? `<p class="small mute">Solid line: the piecewise main-sequence model the HR module uses
-      (<code>main_sequence_mag_from_color</code>). Dashed: model + median offset ± ${f(hr.threshold)} × MAD (${f(hr.scale, 3)} mag), the
+      (<code>main_sequence_mag_from_color</code>). Dashed: model + median offset ± ${f(hr.threshold)} × robust σ (1.4826 × MAD = ${f(hr.scale, 3)} mag), the
       robust z-score limit of the main-sequence test. A star outside the band is also checked by DBSCAN, KDE and GMM; the HR module
       reports it only if at least two of the four agree. Absolute G uses 1/parallax with no extinction correction, so in a low-latitude field such as the demo (b ≈ +7°) interstellar dust moves stars to the right of and below the model line.</p>` : ''}
     ${view === 'sky' ? '<p class="small mute">RA increases to the left, as on the sky.</p>' : ''}`;

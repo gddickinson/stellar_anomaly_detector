@@ -13,8 +13,8 @@ from dataclasses import asdict, fields
 
 import numpy as np
 import pandas as pd
-from scipy.stats import median_abs_deviation
 
+from ..analysis.robust import robust_center_scale
 from ..analysis.ensemble import (
     HIGH_IMPORTANCE_TYPES, SINGLE_METHOD_MIN_SIGNIFICANCE, TIER1_MIN_TYPE_FAMILIES, TIER2_MIN_METHODS,
     TYPE_FAMILIES, EnsembleScorer,
@@ -50,7 +50,7 @@ STAR_COLUMNS = [
 
 # DetectionConfig fields the web form can change: (name, label, min, max, step, help).
 CONFIG_FIELDS = [
-    ("mad_threshold", "Robust z-score threshold (MAD units)", 2.0, 10.0, 0.5,
+    ("mad_threshold", "Robust z-score threshold (sigma = 1.4826 MAD)", 2.0, 10.0, 0.5,
      "Used by the HR main-sequence, proper-motion, velocity, metallicity and WISE-colour detectors."),
     ("min_parallax_over_error", "Minimum parallax / error", 1.0, 50.0, 1.0, "Quality cut before any analysis."),
     ("max_ruwe", "Maximum RUWE", 1.0, 5.0, 0.1, "Quality cut; also the RUWE-anomaly threshold."),
@@ -131,8 +131,7 @@ def hr_band(df: pd.DataFrame, config: DetectionConfig) -> dict:
         return {"bp_rp": grid.tolist(), "ms_mag": curve, "center": None, "scale": None,
                 "threshold": config.mad_threshold}
     dev = d["abs_mag"].values - d["bp_rp"].apply(models.main_sequence_mag_from_color).values
-    center, scale = float(np.nanmedian(dev)), float(median_abs_deviation(dev, nan_policy="omit"))
-    scale = scale if scale > 0 else float(np.nanstd(dev))
+    center, scale = robust_center_scale(dev)
     return clean({"bp_rp": grid.tolist(), "ms_mag": curve, "center": center, "scale": scale,
                   "threshold": config.mad_threshold})
 

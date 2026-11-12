@@ -11,6 +11,7 @@ import logging
 import numpy as np
 import pandas as pd
 
+from .robust import robust_center_scale
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 
 logger = logging.getLogger(__name__)
@@ -90,9 +91,7 @@ class VariabilityAnalyzer:
             vals = df[col].dropna()
             if len(vals) < self.config.min_data_points:
                 continue
-            median = vals.median()
-            mad = np.median(np.abs(vals - median))
-            mad = mad if mad > 0 else vals.std()
+            median, mad = robust_center_scale(vals)
             z = (df[col] - median) / (mad + 1e-10)
             for idx in df.index[z > self.config.mad_threshold]:
                 results.append(AnomalyResult(

@@ -12,8 +12,8 @@ import logging
 
 import numpy as np
 import pandas as pd
-from scipy.stats import median_abs_deviation
 
+from .robust import robust_center_scale
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 
 logger = logging.getLogger(__name__)
@@ -108,9 +108,7 @@ class SpectralAnalyzer:
         if len(mh) < self.config.min_data_points:
             return []
 
-        median_mh = mh.median()
-        mad_mh = median_abs_deviation(mh, nan_policy="omit")
-        mad_mh = mad_mh if mad_mh > 0 else mh.std()
+        median_mh, mad_mh = robust_center_scale(mh)
 
         results = []
         for idx in df.index:

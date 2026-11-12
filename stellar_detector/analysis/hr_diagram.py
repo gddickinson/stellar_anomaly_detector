@@ -15,8 +15,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy.stats import median_abs_deviation
 
+from .robust import robust_center_scale
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 
 logger = logging.getLogger(__name__)
@@ -85,9 +85,7 @@ class HRDiagramAnalyzer:
         deviation = df["abs_mag"].values - expected_mag.values
 
         if self.config.use_robust_statistics:
-            center = np.nanmedian(deviation)
-            scale = median_abs_deviation(deviation, nan_policy="omit")
-            scale = scale if scale > 0 else np.nanstd(deviation)
+            center, scale = robust_center_scale(deviation)
         else:
             center = np.nanmean(deviation)
             scale = np.nanstd(deviation)

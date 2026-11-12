@@ -11,8 +11,8 @@ import logging
 
 import numpy as np
 import pandas as pd
-from scipy.stats import median_abs_deviation
 
+from .robust import robust_center_scale
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 
 logger = logging.getLogger(__name__)
@@ -48,9 +48,7 @@ class KinematicsAnalyzer:
         if len(valid) < self.config.min_data_points:
             return []
 
-        median_pm = valid.median()
-        mad_pm = median_abs_deviation(valid, nan_policy="omit")
-        mad_pm = mad_pm if mad_pm > 0 else valid.std()
+        median_pm, mad_pm = robust_center_scale(valid)
         z_scores = (pm_total - median_pm) / (mad_pm + 1e-10)
 
         results = []
@@ -65,7 +63,7 @@ class KinematicsAnalyzer:
                 description=f"High proper motion ({pm_total[idx]:.1f} mas/yr, z={z:.1f})",
                 follow_up_priority=min(10, max(1, int(z))),
                 detection_method="proper_motion_mad",
-                statistical_tests={"z_score": z, "median": float(median_pm), "mad": float(mad_pm)},
+                statistical_tests={"z_score": z, "median": float(median_pm), "sigma_mad": float(mad_pm)},
                 catalog_source=str(df.loc[idx, "catalog_source"])
                 if "catalog_source" in df.columns else "",
             ))
@@ -130,9 +128,7 @@ class KinematicsAnalyzer:
             return []
 
         # Hypervelocity threshold: > 300 km/s or > 5 MAD from median
-        median_v = v_tan.median()
-        mad_v = median_abs_deviation(v_tan, nan_policy="omit")
-        mad_v = mad_v if mad_v > 0 else v_tan.std()
+        median_v, mad_v = robust_center_scale(v_tan)
 
         results = []
         for idx in df.index:

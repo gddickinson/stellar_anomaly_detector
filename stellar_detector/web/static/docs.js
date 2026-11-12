@@ -16,8 +16,8 @@ route('method', async () => {
       and the BP/RP flux excess factor is between ${f(c.min_phot_bp_rp_excess)} and ${f(c.max_phot_bp_rp_excess)} (missing values pass).
       In the demo field this keeps ${sum.n_stars} of ${sum.n_input.toLocaleString()} sources, mostly by removing faint distant stars with imprecise parallaxes.</p>
     <h2>2. Detection modules</h2>
-    <p class="small mute">"z" below is a robust z-score: (value − median) / MAD, with the raw median absolute deviation (not scaled
-      by 1.4826). The default threshold of ${f(c.mad_threshold)} MAD corresponds to about ${f(c.mad_threshold / 1.4826, 2)} σ for a Gaussian distribution.</p>
+    <p class="small mute">"z" below is a robust z-score: (value − median) / (1.4826 × MAD), so for Gaussian data it is in units of σ and the
+      default threshold of ${f(c.mad_threshold)} means about ${f(c.mad_threshold)} σ.</p>
     <div class="grid wide">
       <div class="card"><b>HR diagram</b><span>Four tests on colour (BP−RP) and absolute G: distance from a piecewise-linear main-sequence model
         (|z| > ${f(c.mad_threshold)}), DBSCAN noise points, the lowest 1% of KDE density, and the lowest 1% of GMM likelihood.

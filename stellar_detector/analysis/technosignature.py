@@ -11,6 +11,7 @@ import logging
 import numpy as np
 import pandas as pd
 
+from .robust import robust_center_scale
 from ..core.models import AnomalyResult, AnomalyType, DetectionConfig
 
 logger = logging.getLogger(__name__)
@@ -190,7 +191,6 @@ class TechnosignatureAnalyzer:
         material, debris disks, or artificial structures.
         """
         results = []
-        from scipy.stats import median_abs_deviation
 
         # Use robust statistical outlier detection on WISE colors
         # rather than fixed thresholds, since color distributions vary by field
@@ -204,9 +204,7 @@ class TechnosignatureAnalyzer:
             if len(vals) < self.config.min_data_points:
                 continue
 
-            median_val = vals.median()
-            mad = median_abs_deviation(vals, nan_policy="omit")
-            mad = mad if mad > 0 else vals.std()
+            median_val, mad = robust_center_scale(vals)
             threshold = self.config.mad_threshold
 
             for idx in df.index:

@@ -18,7 +18,7 @@ route('candidates', async (args, query) => {
     <p class="lead">${cands.length} of ${sum.n_stars.toLocaleString()} stars selected by the ensemble scorer, ranked by follow-up
       priority, then significance (as <code>EnsembleScorer.aggregate</code> orders them). ${sum.n_flagged_stars} stars had at least one raw detection.</p>
     <div class="legend">${[1, 2, 3].map(t => dot(TIER_NAMES[t] + ` (${sum.tiers[t] || 0})`, TIER_COLORS[t])).join('')}</div>
-    <p class="small mute">Significance is not on one scale across modules: for z-score tests it is |z| in MAD units, for the lifetime
+    <p class="small mute">Significance is not on one scale across modules: for z-score tests it is the robust |z| (in σ), for the lifetime
       test it is 10 × the fraction of the main-sequence band crossed, for the ML pipeline 10 × the ensemble score. See Method.</p>
     <div class="row"><div><label for="ftier">Tier</label><select id="ftier"><option value="">all</option>${[1, 2, 3].map(t => `<option value="${t}">Tier ${t}</option>`).join('')}</select></div>
       <div><label for="ftype">Type</label><select id="ftype"><option value="">all</option>${types.map(t => `<option value="${esc(t)}">${esc(nice(t))}</option>`).join('')}</select></div>
