@@ -360,6 +360,11 @@ class DataFetcher:
         df["is_injected_anomaly"] = False
         df.loc[anomaly_idx, "is_injected_anomaly"] = True
 
+        # Apparent G consistent with abs_mag and parallax: preprocessing recomputes abs_mag from
+        # these, which would otherwise erase the injected HR offsets. (The uniform draw above is
+        # kept so the random stream, and every other column, is unchanged.)
+        df["phot_g_mean_mag"] = df["abs_mag"] + 5.0 * np.log10(1000.0 / df["parallax"]) - 5.0
+
         return df
 
 

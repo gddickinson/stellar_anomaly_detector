@@ -112,3 +112,11 @@ class TestPreprocessCatalog:
         result = preprocess_catalog(synthetic_raw, config)
         # Quality filters should remove some rows
         assert len(result) <= len(synthetic_raw)
+
+
+def test_synthetic_injected_offsets_survive_preprocessing(synthetic_raw):
+    """abs_mag is recomputed from G and parallax, so the generator's photometry must agree with its abs_mag
+    (otherwise the injected +2..6 mag HR anomalies are silently erased)."""
+    from stellar_detector.data.preprocessing import compute_derived_quantities
+    out = compute_derived_quantities(synthetic_raw.copy())
+    np.testing.assert_allclose(out["abs_mag"], synthetic_raw["abs_mag"], rtol=0, atol=1e-9)
